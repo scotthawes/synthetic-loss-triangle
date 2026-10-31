@@ -14,9 +14,13 @@ plumbing rather than actuarial accuracy.
 ## Quick start
 
 ```sh
-python3 scripts/make_triangle.py        # regenerates data/ byte-identically
-python3 scripts/verify.py               # checks the digests and recovers the factors
+python3 scripts/make_triangle.py             # regenerates data/ byte-identically
+python3 scripts/make_triangle_population.py  # the 50-triangle population, byte-identically
+python3 scripts/verify.py                    # checks the digests and recovers the factors
 ```
+
+For the framing that turns this into a reserving demo — predict the link ratio over Chain Ladder's factor, pool by
+anchor, and the depth caveat — see [docs/using-this-as-a-demo.md](docs/using-this-as-a-demo.md).
 
 No dependencies. Python 3.10 or newer, standard library only.
 
@@ -43,9 +47,10 @@ estimate real-world performance. Three reasons, all deliberate consequences of h
   and calendar-year effects. This one has none of them, and those are exactly where methods differ.
 - **Too separable.** The development factors are recoverable from the data to within about 1 % — good for a
   demonstration, useless for discriminating between methods.
-- **The answer differs from real data.** Measured on this generator's 50-triangle population, a depth-dependent
-  error slope came out at **+0.0493**; the same method on real casualty triangles gives **+0.0317**. A 1.5×
-  difference from corpus alone. Treat any absolute number measured here as a property of *this file*.
+- **The answer differs from real data.** Measured on this generator's 50-triangle population
+  (`scripts/make_triangle_population.py`), a depth-dependent error slope came out at **+0.0493**; the same method on
+  real casualty triangles gives **+0.0317**. A 1.5× difference from corpus alone. Treat any absolute number measured
+  here as a property of *this file*.
 
 What it *is* for: exercising a CSV-to-model pipeline, demonstrating a workflow, checking that depth and anchors
 mean what you think they mean, and teaching the shape.
