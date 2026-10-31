@@ -1,0 +1,38 @@
+{
+  "seed": 20261030,
+  "origins": 10,
+  "developments": 10,
+  "development_factors": [
+    2.6,
+    1.65,
+    1.32,
+    1.16,
+    1.09,
+    1.05,
+    1.03,
+    1.02,
+    1.01
+  ],
+  "cumulative_proportions": [
+    0.125353,
+    0.325919,
+    0.537766,
+    0.709851,
+    0.823428,
+    0.897536,
+    0.942413,
+    0.970685,
+    0.990099,
+    1.0
+  ],
+  "exposure_base": 1000000.0,
+  "exposure_trend": 0.03,
+  "exposure_sigma": 0.05,
+  "loss_ratio": 0.68,
+  "ultimate_sigma": 0.1,
+  "incremental_sigma": 0.15,
+  "observed_rows": 55,
+  "unobserved_rows": 45,
+  "observed_sha256": "b06de29b8800fc2f8c912ab587401a5e4741dcf2d37e6ac582ec300d21c92e40",
+  "full_sha256": "be92c4d36be2f2faa239f9b9b05bf8cd42a1ef2ebe46f3e438a902206a8d6c74"
+}
