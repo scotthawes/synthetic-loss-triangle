@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """Check that the committed data is reproducible, and that the factors are recoverable.
 
-Two properties matter to anyone who relies on this file:
+Two properties matter to anyone who relies on these files:
 
 1. The CSVs match their recorded digests, and regenerating produces the same bytes.
 2. The declared age-to-age factors can be recovered from the published triangle.
 
-The second is also where people go wrong: factors must be weighted over origins observed at
-**both** ages. Pooling unmatched origin sets gives factors below 1 and is the wrong estimator,
-so this script demonstrates the right one.
+Both artifacts are covered: the single triangle, and the 50-triangle population that
+`docs/using-this-as-a-demo.md` pools across. The population's digests live in
+`data/synthetic_population_params.json`, and that file is regenerated too, so it cannot
+drift from the seeds and row counts it claims.
+
+The second property is also where people go wrong: factors must be weighted over origins
+observed at **both** ages. Pooling unmatched origin sets gives factors below 1 and is the
+wrong estimator, so this script demonstrates the right one.
 """
 
 from __future__ import annotations
@@ -26,6 +31,26 @@ ROOT = HERE.parent
 
 def sha256(path: pathlib.Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def regenerate(script: str, names: tuple[str, ...], label: str) -> bool:
+    """Re-run a generator and confirm it rewrites `names` byte-identically.
+
+    `cwd=ROOT` matters: both generators default `--out-dir` to the relative path `data`, so
+    without it the subprocess writes into whatever directory verify.py was invoked from and
+    the comparison passes without ever touching the committed files.
+    """
+    before = {name: sha256(ROOT / "data" / name) for name in names}
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / script)],
+        check=True,
+        capture_output=True,
+        cwd=ROOT,
+    )
+    after = {name: sha256(ROOT / "data" / name) for name in names}
+    ok = before == after
+    print(f"{'PASS' if ok else 'FAIL'}  {label}")
+    return ok
 
 
 def load(path: pathlib.Path) -> dict[tuple[int, int], float]:
@@ -50,17 +75,34 @@ def main() -> int:
         if not ok:
             failures.append(name)
 
-    before = {n: sha256(ROOT / "data" / n) for n in (
-        "synthetic_triangle_observed.csv", "synthetic_triangle_full.csv")}
-    subprocess.run(
-        [sys.executable, str(ROOT / "scripts/make_triangle.py")],
-        check=True, capture_output=True,
-    )
-    after = {n: sha256(ROOT / "data" / n) for n in before}
-    ok = before == after
-    print(f"{'PASS' if ok else 'FAIL'}  regenerating produces identical bytes")
-    if not ok:
+    if not regenerate(
+        "make_triangle.py",
+        ("synthetic_triangle_observed.csv", "synthetic_triangle_full.csv"),
+        "regenerating the triangle produces identical bytes",
+    ):
         failures.append("regeneration")
+
+    population = json.loads((ROOT / "data/synthetic_population_params.json").read_text())
+    for name, key in (
+        ("synthetic_population_observed.csv", "observed_sha256"),
+        ("synthetic_population_full.csv", "full_sha256"),
+    ):
+        actual = sha256(ROOT / "data" / name)
+        ok = actual == population[key]
+        print(f"{'PASS' if ok else 'FAIL'}  digest  {name}  {actual[:16]}...")
+        if not ok:
+            failures.append(name)
+
+    if not regenerate(
+        "make_triangle_population.py",
+        (
+            "synthetic_population_observed.csv",
+            "synthetic_population_full.csv",
+            "synthetic_population_params.json",
+        ),
+        "regenerating the population produces identical bytes",
+    ):
+        failures.append("population regeneration")
 
     cells = load(ROOT / "data/synthetic_triangle_observed.csv")
     declared = params["development_factors"]
